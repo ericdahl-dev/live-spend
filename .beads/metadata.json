@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "live_spend",
+  "project_id": "d2a27bbd-ada8-40ee-8c29-fe5fdeb12596"
+}
