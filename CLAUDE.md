@@ -50,20 +50,28 @@ bd close <id>         # Complete work
 <!-- END BEADS INTEGRATION -->
 
 
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub (`ericdahl-dev/live-spend`) — use `gh issue create/view/list`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo — one `CONTEXT.md` + `docs/adr/` at root. See `docs/agents/domain.md`.
+
 ## Build & Test
 
-_Add your build and test commands here_
-
 ```bash
-# Example:
-# npm install
-# npm test
+bun test src/       # run all tests
+bun run dev         # run TUI with hot reload (requires .env)
+bun run start       # run TUI once
 ```
 
 ## Architecture Overview
 
-_Add a brief overview of your project architecture_
-
-## Conventions & Patterns
-
-_Add your project-specific conventions here_
+TUI app (OpenTUI + SolidJS) polling OpenAI, Anthropic, and OpenRouter usage APIs every 30s. See `CONTEXT.md` for full domain glossary and architecture summary.
