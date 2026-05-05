@@ -1,3 +1,5 @@
+import { createSignal } from "solid-js"
+
 /**
  * Normalised usage data returned by every provider fetcher.
  * Fields are optional because each provider exposes different metrics.
@@ -34,6 +36,26 @@ export interface ProviderRates {
   creditsUsed?: number
 }
 
+/** Lifecycle status of a provider's data fetch. */
+export type ProviderStatus =
+  | "idle"          // Initial state before first poll
+  | "loading"       // Fetch in flight
+  | "ok"            // Last fetch succeeded
+  | "error"         // Last fetch failed
+  | "unconfigured"  // No API key set for this provider
+
+/** All reactive state for one provider, held in a Solid signal. */
+export interface ProviderState {
+  /** The latest usage data from the provider's API. */
+  result: ProviderResult
+  /** Current lifecycle status of this provider's data. */
+  status: ProviderStatus
+  /** When the last successful or failed fetch completed. */
+  lastUpdated?: Date
+  /** Hourly burn rates derived from result. Empty until data is available. */
+  rates: ProviderRates
+}
+
 /**
  * Returns the number of hours elapsed since midnight UTC today.
  * Used as the denominator when calculating hourly burn rates.
@@ -52,9 +74,15 @@ export function calcRates(result: ProviderResult, now: Date = new Date()): Provi
   if (hoursElapsed === 0) return {}
 
   const rates: ProviderRates = {}
-  if (result.spend !== undefined) rates.spend = Number(result.spend) / hoursElapsed
+  if (result.spend !== undefined) rates.spend = result.spend / hoursElapsed
   if (result.inputTokens !== undefined) rates.inputTokens = result.inputTokens / hoursElapsed
   if (result.outputTokens !== undefined) rates.outputTokens = result.outputTokens / hoursElapsed
-  if (result.creditsUsed !== undefined) rates.creditsUsed = Number(result.creditsUsed) / hoursElapsed
+  if (result.creditsUsed !== undefined) rates.creditsUsed = result.creditsUsed / hoursElapsed
   return rates
 }
+
+const initialState = (): ProviderState => ({ result: {}, status: "idle", rates: {} })
+
+export const [openai, setOpenAI] = createSignal<ProviderState>(initialState())
+export const [anthropic, setAnthropic] = createSignal<ProviderState>(initialState())
+export const [openrouter, setOpenRouter] = createSignal<ProviderState>(initialState())

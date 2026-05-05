@@ -1,6 +1,6 @@
 import type { Component } from "solid-js"
 import { Show } from "solid-js"
-import type { ProviderState } from "../store"
+import type { ProviderState } from "../rates"
 
 interface Props {
   name: string
@@ -24,7 +24,7 @@ function formatTokenRate(tokensPerHour: number | undefined): string {
 
 /** Formats a USD value as "$12.3456". Coerces strings since some APIs return spend as a string. */
 function formatDollars(value: number | undefined): string {
-  return `$${Number(value ?? 0).toFixed(4)}`
+  return `$${(value ?? 0).toFixed(4)}`
 }
 
 const ProviderCard: Component<Props> = (props) => {

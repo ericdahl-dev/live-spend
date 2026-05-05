@@ -1,4 +1,5 @@
 import type { ProviderResult } from "../rates"
+import { fetchJson } from "./fetchJson"
 
 /**
  * Fetches today's token usage from the Anthropic organization usage report API.
@@ -17,22 +18,7 @@ export async function fetchAnthropic(apiKey: string): Promise<ProviderResult> {
     bucket_width: "1d",
   })
 
-  const res = await fetch(
-    `https://api.anthropic.com/v1/organizations/usage_report/messages?${queryParams}`,
-    {
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-    }
-  )
-
-  if (!res.ok) {
-    const errorText = await res.text()
-    return { error: `${res.status}: ${errorText}` }
-  }
-
-  const json = (await res.json()) as {
+  const result = await fetchJson<{
     data: Array<{
       usage: {
         input_tokens: number
@@ -41,12 +27,22 @@ export async function fetchAnthropic(apiKey: string): Promise<ProviderResult> {
         cache_read_input_tokens: number
       }
     }>
-  }
+  }>(
+    `https://api.anthropic.com/v1/organizations/usage_report/messages?${queryParams}`,
+    { headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01" } }
+  )
 
-  if (!json.data?.length) return { inputTokens: 0, outputTokens: 0 }
+  if (!result.ok) return { error: result.error }
+  if (!result.data.data?.length) return { inputTokens: 0, outputTokens: 0 }
 
-  const totalInputTokens = json.data.reduce((sum, bucket) => sum + (bucket.usage?.input_tokens ?? 0), 0)
-  const totalOutputTokens = json.data.reduce((sum, bucket) => sum + (bucket.usage?.output_tokens ?? 0), 0)
+  const totalInputTokens = result.data.data.reduce(
+    (sum, bucket) => sum + (bucket.usage?.input_tokens ?? 0),
+    0
+  )
+  const totalOutputTokens = result.data.data.reduce(
+    (sum, bucket) => sum + (bucket.usage?.output_tokens ?? 0),
+    0
+  )
 
   return { inputTokens: totalInputTokens, outputTokens: totalOutputTokens }
 }

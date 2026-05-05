@@ -1,4 +1,5 @@
 import type { ProviderResult } from "../rates"
+import { fetchJson } from "./fetchJson"
 
 /**
  * Fetches credit usage for the current API key from OpenRouter.
@@ -7,27 +8,20 @@ import type { ProviderResult } from "../rates"
  * Endpoint: GET /api/v1/auth/key
  */
 export async function fetchOpenRouter(apiKey: string): Promise<ProviderResult> {
-  const res = await fetch("https://openrouter.ai/api/v1/auth/key", {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
+  const result = await fetchJson<{
+    data: {
+      usage: number | string | null
+      limit: number | null
+      limit_remaining: number | string | null
+    }
+  }>("https://openrouter.ai/api/v1/auth/key", {
+    headers: { Authorization: `Bearer ${apiKey}` },
   })
 
-  if (!res.ok) {
-    const errorText = await res.text()
-    return { error: `${res.status}: ${errorText}` }
-  }
-
-  const json = (await res.json()) as {
-    data: {
-      usage: number | null
-      limit: number | null
-      limit_remaining: number | null
-    }
-  }
+  if (!result.ok) return { error: result.error }
 
   return {
-    creditsUsed: json.data.usage ?? undefined,
-    creditsRemaining: json.data.limit_remaining ?? undefined,
+    creditsUsed: result.data.data.usage != null ? Number(result.data.data.usage) : undefined,
+    creditsRemaining: result.data.data.limit_remaining != null ? Number(result.data.data.limit_remaining) : undefined,
   }
 }

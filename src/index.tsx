@@ -9,8 +9,8 @@ import {
   openai, setOpenAI,
   anthropic, setAnthropic,
   openrouter, setOpenRouter,
-} from "./store"
-import type { ProviderState } from "./store"
+} from "./rates"
+import type { ProviderState } from "./rates"
 import { calcRates } from "./rates"
 import ProviderCard from "./components/ProviderCard"
 import type { Accessor, Setter } from "solid-js"
