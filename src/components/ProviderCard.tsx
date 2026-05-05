@@ -8,12 +8,23 @@ interface Props {
   state: ProviderState
 }
 
-function fmtRate(val: number | undefined, unit: "usd" | "tok"): string {
-  if (val === undefined) return ""
-  if (unit === "usd") return `$${val.toFixed(4)} / hr`
-  const abs = Math.abs(val)
-  const formatted = abs >= 1000 ? `${(abs / 1000).toFixed(1)}k` : abs.toFixed(0)
+/** Formats a USD spend rate as "$0.0012 / hr". */
+function formatSpendRate(dollarsPerHour: number | undefined): string {
+  if (dollarsPerHour === undefined) return ""
+  return `$${dollarsPerHour.toFixed(4)} / hr`
+}
+
+/** Formats a token rate as "1.2k tok / hr" or "800 tok / hr". */
+function formatTokenRate(tokensPerHour: number | undefined): string {
+  if (tokensPerHour === undefined) return ""
+  const count = Math.abs(tokensPerHour)
+  const formatted = count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count.toFixed(0)
   return `${formatted} tok / hr`
+}
+
+/** Formats a USD value as "$12.3456". Coerces strings since some APIs return spend as a string. */
+function formatDollars(value: number | undefined): string {
+  return `$${Number(value ?? 0).toFixed(4)}`
 }
 
 const ProviderCard: Component<Props> = (props) => {
@@ -23,10 +34,10 @@ const ProviderCard: Component<Props> = (props) => {
   const result = () => props.state.result
   const rates = () => props.state.rates
 
-  const lastUpdated = () => {
-    const d = props.state.lastUpdated
-    if (!d) return ""
-    return d.toLocaleTimeString()
+  const formattedLastUpdated = () => {
+    const lastUpdated = props.state.lastUpdated
+    if (!lastUpdated) return ""
+    return lastUpdated.toLocaleTimeString()
   }
 
   return (
@@ -52,14 +63,12 @@ const ProviderCard: Component<Props> = (props) => {
         <Show when={result().spend !== undefined}>
           <text>
             <span fg="#888">Spend today: </span>
-            <span fg={props.color}>
-              {isLoading() ? "…" : `$${Number(result().spend ?? 0).toFixed(4)}`}
-            </span>
+            <span fg={props.color}>{isLoading() ? "…" : formatDollars(result().spend)}</span>
           </text>
           <Show when={rates().spend !== undefined}>
             <text>
               <span fg="#888">Rate:        </span>
-              <span fg="#666">{fmtRate(rates().spend, "usd")}</span>
+              <span fg="#666">{formatSpendRate(rates().spend)}</span>
             </text>
           </Show>
         </Show>
@@ -72,7 +81,7 @@ const ProviderCard: Component<Props> = (props) => {
             </span>
           </text>
           <Show when={rates().inputTokens !== undefined}>
-            <text fg="#666">{"  "}{fmtRate(rates().inputTokens, "tok")}</text>
+            <text fg="#666">{"  "}{formatTokenRate(rates().inputTokens)}</text>
           </Show>
           <text>
             <span fg="#888">Output: </span>
@@ -81,29 +90,25 @@ const ProviderCard: Component<Props> = (props) => {
             </span>
           </text>
           <Show when={rates().outputTokens !== undefined}>
-            <text fg="#666">{"  "}{fmtRate(rates().outputTokens, "tok")}</text>
+            <text fg="#666">{"  "}{formatTokenRate(rates().outputTokens)}</text>
           </Show>
         </Show>
 
         <Show when={result().creditsUsed !== undefined}>
           <text>
             <span fg="#888">Used:      </span>
-            <span fg={props.color}>
-              {isLoading() ? "…" : `$${Number(result().creditsUsed ?? 0).toFixed(4)}`}
-            </span>
+            <span fg={props.color}>{isLoading() ? "…" : formatDollars(result().creditsUsed)}</span>
           </text>
           <Show when={rates().creditsUsed !== undefined}>
             <text>
               <span fg="#888">Rate:        </span>
-              <span fg="#666">{fmtRate(rates().creditsUsed, "usd")}</span>
+              <span fg="#666">{formatSpendRate(rates().creditsUsed)}</span>
             </text>
           </Show>
           <Show when={result().creditsRemaining !== undefined}>
             <text>
               <span fg="#888">Remaining: </span>
-              <span fg={props.color}>
-                {isLoading() ? "…" : `$${Number(result().creditsRemaining ?? 0).toFixed(4)}`}
-              </span>
+              <span fg={props.color}>{isLoading() ? "…" : formatDollars(result().creditsRemaining)}</span>
             </text>
           </Show>
         </Show>
@@ -113,8 +118,8 @@ const ProviderCard: Component<Props> = (props) => {
         </Show>
       </Show>
 
-      <Show when={lastUpdated()}>
-        <text fg="#444">{lastUpdated()}</text>
+      <Show when={formattedLastUpdated()}>
+        <text fg="#444">{formattedLastUpdated()}</text>
       </Show>
     </box>
   )

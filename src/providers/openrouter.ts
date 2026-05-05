@@ -1,5 +1,11 @@
 import type { ProviderResult } from "../rates"
 
+/**
+ * Fetches credit usage for the current API key from OpenRouter.
+ * Returns lifetime credits used and remaining balance on the key's limit.
+ * Note: this reflects all-time usage on the key, not just today's.
+ * Endpoint: GET /api/v1/auth/key
+ */
 export async function fetchOpenRouter(apiKey: string): Promise<ProviderResult> {
   const res = await fetch("https://openrouter.ai/api/v1/auth/key", {
     headers: {
@@ -8,8 +14,8 @@ export async function fetchOpenRouter(apiKey: string): Promise<ProviderResult> {
   })
 
   if (!res.ok) {
-    const text = await res.text()
-    return { error: `${res.status}: ${text}` }
+    const errorText = await res.text()
+    return { error: `${res.status}: ${errorText}` }
   }
 
   const json = (await res.json()) as {

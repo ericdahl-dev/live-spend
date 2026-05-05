@@ -15,17 +15,32 @@ import { calcRates } from "./rates"
 import ProviderCard from "./components/ProviderCard"
 import type { Accessor, Setter } from "solid-js"
 
+/** How often to re-fetch all provider usage data, in milliseconds. */
 const POLL_INTERVAL_MS = 30_000
 
+/**
+ * Everything needed to poll one provider and display its card.
+ * Adding a new provider means adding one entry to PROVIDERS — nothing else.
+ */
 interface ProviderConfig {
+  /** Display name shown in the card title. */
   name: string
+  /** Accent color for the card border and values. */
   color: string
+  /** API key read from the environment. Empty string = not configured. */
   apiKey: string
-  fetcher: (key: string) => Promise<ProviderResult>
+  /** Fetches today's usage from the provider's API. */
+  fetcher: (apiKey: string) => Promise<ProviderResult>
+  /** Solid signal accessor — reads current state for this provider. */
   state: Accessor<ProviderState>
+  /** Solid signal setter — writes new state for this provider. */
   setState: Setter<ProviderState>
 }
 
+/**
+ * All configured providers. To add a new one, append an entry here.
+ * No other code needs to change.
+ */
 const PROVIDERS: ProviderConfig[] = [
   {
     name: "OpenAI",
@@ -53,21 +68,29 @@ const PROVIDERS: ProviderConfig[] = [
   },
 ]
 
-async function pollProvider(p: ProviderConfig) {
-  p.setState(s => ({ ...s, status: "loading" }))
-  const result = await p.fetcher(p.apiKey)
-  const now = new Date()
-  const rates = result.error ? {} : calcRates(result, now)
-  p.setState({ result, status: result.error ? "error" : "ok", lastUpdated: now, rates })
+/**
+ * Fetches fresh usage data for one provider and updates its signal.
+ * Sets status to "loading" while the request is in flight, then "ok" or "error".
+ */
+async function pollProvider(provider: ProviderConfig) {
+  provider.setState(previous => ({ ...previous, status: "loading" }))
+  const result = await provider.fetcher(provider.apiKey)
+  const fetchedAt = new Date()
+  const rates = result.error ? {} : calcRates(result, fetchedAt)
+  provider.setState({ result, status: result.error ? "error" : "ok", lastUpdated: fetchedAt, rates })
 }
 
+/** Polls all providers that have an API key configured, in parallel. */
 async function pollAll() {
-  await Promise.all(PROVIDERS.filter(p => p.apiKey).map(pollProvider))
+  const configuredProviders = PROVIDERS.filter(provider => provider.apiKey)
+  await Promise.all(configuredProviders.map(pollProvider))
 }
 
-function initUnconfigured() {
-  PROVIDERS.filter(p => !p.apiKey).forEach(p =>
-    p.setState({ result: {}, status: "unconfigured", rates: {} })
+/** Marks providers with no API key as unconfigured so the UI shows a clear message. */
+function markUnconfiguredProviders() {
+  const unconfiguredProviders = PROVIDERS.filter(provider => !provider.apiKey)
+  unconfiguredProviders.forEach(provider =>
+    provider.setState({ result: {}, status: "unconfigured", rates: {} })
   )
 }
 
@@ -80,10 +103,10 @@ function App() {
   })
 
   onMount(() => {
-    initUnconfigured()
+    markUnconfiguredProviders()
     void pollAll()
-    const id = setInterval(() => void pollAll(), POLL_INTERVAL_MS)
-    onCleanup(() => clearInterval(id))
+    const intervalId = setInterval(() => void pollAll(), POLL_INTERVAL_MS)
+    onCleanup(() => clearInterval(intervalId))
   })
 
   return (
@@ -104,7 +127,9 @@ function App() {
 
       <box flexDirection="row" flexGrow={1} gap={1} padding={1}>
         <For each={PROVIDERS}>
-          {(p) => <ProviderCard name={p.name} color={p.color} state={p.state()} />}
+          {(provider) => (
+            <ProviderCard name={provider.name} color={provider.color} state={provider.state()} />
+          )}
         </For>
       </box>
 

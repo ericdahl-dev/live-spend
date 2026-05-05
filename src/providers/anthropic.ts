@@ -1,18 +1,24 @@
 import type { ProviderResult } from "../rates"
 
+/**
+ * Fetches today's token usage from the Anthropic organization usage report API.
+ * Requires an admin key (ANTHROPIC_ADMIN_KEY), not a regular inference key.
+ * Returns raw token counts — Anthropic does not expose cost on standard keys.
+ * Endpoint: GET /v1/organizations/usage_report/messages
+ */
 export async function fetchAnthropic(apiKey: string): Promise<ProviderResult> {
   const now = new Date()
-  const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-  const endOfDay = new Date(startOfDay.getTime() + 86400000)
+  const todayMidnightUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  const tomorrowMidnightUtc = new Date(todayMidnightUtc.getTime() + 86_400_000)
 
-  const params = new URLSearchParams({
-    starting_at: startOfDay.toISOString(),
-    ending_at: endOfDay.toISOString(),
+  const queryParams = new URLSearchParams({
+    starting_at: todayMidnightUtc.toISOString(),
+    ending_at: tomorrowMidnightUtc.toISOString(),
     bucket_width: "1d",
   })
 
   const res = await fetch(
-    `https://api.anthropic.com/v1/organizations/usage_report/messages?${params}`,
+    `https://api.anthropic.com/v1/organizations/usage_report/messages?${queryParams}`,
     {
       headers: {
         "x-api-key": apiKey,
@@ -22,8 +28,8 @@ export async function fetchAnthropic(apiKey: string): Promise<ProviderResult> {
   )
 
   if (!res.ok) {
-    const text = await res.text()
-    return { error: `${res.status}: ${text}` }
+    const errorText = await res.text()
+    return { error: `${res.status}: ${errorText}` }
   }
 
   const json = (await res.json()) as {
@@ -39,8 +45,8 @@ export async function fetchAnthropic(apiKey: string): Promise<ProviderResult> {
 
   if (!json.data?.length) return { inputTokens: 0, outputTokens: 0 }
 
-  const inputTokens = json.data.reduce((sum, d) => sum + (d.usage?.input_tokens ?? 0), 0)
-  const outputTokens = json.data.reduce((sum, d) => sum + (d.usage?.output_tokens ?? 0), 0)
+  const totalInputTokens = json.data.reduce((sum, bucket) => sum + (bucket.usage?.input_tokens ?? 0), 0)
+  const totalOutputTokens = json.data.reduce((sum, bucket) => sum + (bucket.usage?.output_tokens ?? 0), 0)
 
-  return { inputTokens, outputTokens }
+  return { inputTokens: totalInputTokens, outputTokens: totalOutputTokens }
 }
