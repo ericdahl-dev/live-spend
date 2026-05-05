@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test"
-import { calcRates, hoursElapsedToday } from "./store"
+import { calcRates, hoursElapsedToday } from "./rates"
 
 describe("hoursElapsedToday", () => {
   it("returns 0 at midnight UTC", () => {

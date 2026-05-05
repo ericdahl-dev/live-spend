@@ -1,64 +1,82 @@
 import { onMount, onCleanup } from "solid-js"
+import { For } from "solid-js"
 import { render, useKeyboard, useRenderer } from "@opentui/solid"
 import { fetchOpenAI } from "./providers/openai"
 import { fetchAnthropic } from "./providers/anthropic"
 import { fetchOpenRouter } from "./providers/openrouter"
+import type { ProviderResult } from "./rates"
 import {
   openai, setOpenAI,
   anthropic, setAnthropic,
   openrouter, setOpenRouter,
-  calcRates,
 } from "./store"
+import type { ProviderState } from "./store"
+import { calcRates } from "./rates"
 import ProviderCard from "./components/ProviderCard"
+import type { Accessor, Setter } from "solid-js"
 
 const POLL_INTERVAL_MS = 30_000
 
-const OPENAI_KEY = process.env["OPENAI_ADMIN_KEY"] ?? ""
-const ANTHROPIC_KEY = process.env["ANTHROPIC_ADMIN_KEY"] ?? ""
-const OPENROUTER_KEY = process.env["OPENROUTER_API_KEY"] ?? ""
+interface ProviderConfig {
+  name: string
+  color: string
+  apiKey: string
+  fetcher: (key: string) => Promise<ProviderResult>
+  state: Accessor<ProviderState>
+  setState: Setter<ProviderState>
+}
 
-function initUnconfigured() {
-  if (!OPENAI_KEY) setOpenAI({ result: {}, status: "unconfigured", rates: {} })
-  if (!ANTHROPIC_KEY) setAnthropic({ result: {}, status: "unconfigured", rates: {} })
-  if (!OPENROUTER_KEY) setOpenRouter({ result: {}, status: "unconfigured", rates: {} })
+const PROVIDERS: ProviderConfig[] = [
+  {
+    name: "OpenAI",
+    color: "#10a37f",
+    apiKey: process.env["OPENAI_ADMIN_KEY"] ?? "",
+    fetcher: fetchOpenAI,
+    state: openai,
+    setState: setOpenAI,
+  },
+  {
+    name: "Anthropic",
+    color: "#d97757",
+    apiKey: process.env["ANTHROPIC_ADMIN_KEY"] ?? "",
+    fetcher: fetchAnthropic,
+    state: anthropic,
+    setState: setAnthropic,
+  },
+  {
+    name: "OpenRouter",
+    color: "#6c7ae0",
+    apiKey: process.env["OPENROUTER_API_KEY"] ?? "",
+    fetcher: fetchOpenRouter,
+    state: openrouter,
+    setState: setOpenRouter,
+  },
+]
+
+async function pollProvider(p: ProviderConfig) {
+  p.setState(s => ({ ...s, status: "loading" }))
+  const result = await p.fetcher(p.apiKey)
+  const now = new Date()
+  const rates = result.error ? {} : calcRates(result, now)
+  p.setState({ result, status: result.error ? "error" : "ok", lastUpdated: now, rates })
 }
 
 async function pollAll() {
-  if (OPENAI_KEY) {
-    setOpenAI(s => ({ ...s, status: "loading" }))
-    const result = await fetchOpenAI(OPENAI_KEY)
-    const now = new Date()
-    const rates = result.error ? {} : calcRates(result, now)
-    setOpenAI({ result, status: result.error ? "error" : "ok", lastUpdated: now, rates })
-  }
+  await Promise.all(PROVIDERS.filter(p => p.apiKey).map(pollProvider))
+}
 
-  if (ANTHROPIC_KEY) {
-    setAnthropic(s => ({ ...s, status: "loading" }))
-    const result = await fetchAnthropic(ANTHROPIC_KEY)
-    const now = new Date()
-    const rates = result.error ? {} : calcRates(result, now)
-    setAnthropic({ result, status: result.error ? "error" : "ok", lastUpdated: now, rates })
-  }
-
-  if (OPENROUTER_KEY) {
-    setOpenRouter(s => ({ ...s, status: "loading" }))
-    const result = await fetchOpenRouter(OPENROUTER_KEY)
-    const now = new Date()
-    const rates = result.error ? {} : calcRates(result, now)
-    setOpenRouter({ result, status: result.error ? "error" : "ok", lastUpdated: now, rates })
-  }
+function initUnconfigured() {
+  PROVIDERS.filter(p => !p.apiKey).forEach(p =>
+    p.setState({ result: {}, status: "unconfigured", rates: {} })
+  )
 }
 
 function App() {
   const renderer = useRenderer()
 
   useKeyboard((key) => {
-    if (key.name === "q" || (key.ctrl && key.name === "c")) {
-      renderer.destroy()
-    }
-    if (key.name === "r") {
-      void pollAll()
-    }
+    if (key.name === "q" || (key.ctrl && key.name === "c")) renderer.destroy()
+    if (key.name === "r") void pollAll()
   })
 
   onMount(() => {
@@ -85,9 +103,9 @@ function App() {
       </box>
 
       <box flexDirection="row" flexGrow={1} gap={1} padding={1}>
-        <ProviderCard name="OpenAI" color="#10a37f" state={openai()} />
-        <ProviderCard name="Anthropic" color="#d97757" state={anthropic()} />
-        <ProviderCard name="OpenRouter" color="#6c7ae0" state={openrouter()} />
+        <For each={PROVIDERS}>
+          {(p) => <ProviderCard name={p.name} color={p.color} state={p.state()} />}
+        </For>
       </box>
 
       <box

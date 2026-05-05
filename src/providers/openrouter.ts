@@ -1,4 +1,4 @@
-import type { ProviderResult } from "./types"
+import type { ProviderResult } from "../rates"
 
 export async function fetchOpenRouter(apiKey: string): Promise<ProviderResult> {
   const res = await fetch("https://openrouter.ai/api/v1/auth/key", {

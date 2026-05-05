@@ -1,4 +1,4 @@
-import type { ProviderResult } from "./types"
+import type { ProviderResult } from "../rates"
 
 export async function fetchOpenAI(apiKey: string): Promise<ProviderResult> {
   const startOfDay = Math.floor(new Date().setUTCHours(0, 0, 0, 0) / 1000)

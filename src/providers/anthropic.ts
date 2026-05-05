@@ -1,4 +1,4 @@
-import type { ProviderResult } from "./types"
+import type { ProviderResult } from "../rates"
 
 export async function fetchAnthropic(apiKey: string): Promise<ProviderResult> {
   const now = new Date()
