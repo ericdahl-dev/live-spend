@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
+import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from "vitest"
 import { fetchOpenRouter } from "./openrouter"
 
 describe("fetchOpenRouter", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
+  let fetchSpy: MockInstance<typeof fetch>
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(globalThis, "fetch")
