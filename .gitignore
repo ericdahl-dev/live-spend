@@ -1,4 +1,4 @@
-# dependencies (bun install)
+# dependencies (yarn install)
 node_modules
 
 # output
@@ -37,3 +37,8 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .dolt/
 *.db
 .beads-credential-key
+
+# Yarn Berry
+.yarn/cache
+.yarn/install-state.gz
+.pnp.*

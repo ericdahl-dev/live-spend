@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, spyOn } from "bun:test"
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
 import { fetchJson } from "./fetchJson"
 
 describe("fetchJson", () => {
-  let fetchSpy: ReturnType<typeof spyOn>
+  let fetchSpy: ReturnType<typeof vi.spyOn>
 
-  beforeEach(() => { fetchSpy = spyOn(globalThis, "fetch") })
+  beforeEach(() => { fetchSpy = vi.spyOn(globalThis, "fetch") })
   afterEach(() => { fetchSpy.mockRestore() })
 
   it("returns parsed JSON on success", async () => {
