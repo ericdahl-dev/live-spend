@@ -1,3 +1,4 @@
+import "@opentui/solid/preload"
 import { onMount, onCleanup } from "solid-js"
 import { For } from "solid-js"
 import { render, useKeyboard, useRenderer } from "@opentui/solid"
