@@ -1,0 +1,63 @@
+version: 2
+
+project_name: live-spend
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+    main: .
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+
+brews:
+  - name: live-spend
+    directory: Formula
+    repository:
+      owner: ericdahl-dev
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/ericdahl-dev/live-spend"
+    description: "Terminal dashboard for LLM API rate limits — visualize token and request capacity as refillable towers"
+    license: "MIT"
+    install: |
+      bin.install "live-spend"
+    test: |
+      system "#{bin}/live-spend", "--help"
+
+release:
+  github:
+    owner: ericdahl-dev
+    name: live-spend

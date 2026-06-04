@@ -4,33 +4,33 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
-  test:
-    name: Test
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-go@v5
         with:
-          bun-version: 1.x
+          go-version-file: go.mod
+      - run: go build ./...
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          go-version-file: go.mod
+      - run: go test -v -race ./...
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Type check
-        run: bunx tsc --noEmit
-
-      - name: Test
-        run: bun test src/
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.12.2

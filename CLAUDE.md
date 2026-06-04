@@ -67,11 +67,17 @@ Single-context repo — one `CONTEXT.md` + `docs/adr/` at root. See `docs/agents
 ## Build & Test
 
 ```bash
-bun test src/       # run all tests
-bun run dev         # run TUI with hot reload (requires .env)
-bun run start       # run TUI once
+go build ./...        # compile
+go test -v -race ./.. # run all tests
+go run . --help       # run locally (demo mode)
+go run . --file events.jsonl  # run with JSONL file
+cat events.jsonl | go run .   # run with stdin
 ```
+
+## Release
+
+Tagged releases are built automatically via goreleaser on `v*` tags. To test a local release build: `goreleaser build --snapshot --clean`.
 
 ## Architecture Overview
 
-TUI app (OpenTUI + SolidJS) polling OpenAI, Anthropic, and OpenRouter usage APIs every 30s. See `CONTEXT.md` for full domain glossary and architecture summary.
+Go TUI app (Bubble Tea + Lip Gloss) visualizing LLM API rate limits as refillable water towers. Events drain buckets; time refills them. Supports demo mode, JSONL file input, and stdin piping. See `CONTEXT.md` for full domain glossary and architecture summary.

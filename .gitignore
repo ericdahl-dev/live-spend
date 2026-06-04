@@ -1,31 +1,13 @@
-# dependencies (bun install)
-node_modules
+# Go build output
+live-spend
+dist/
 
-# output
-out
-dist
-*.tgz
+# goreleaser
+.goreleaser-local/
 
-# code coverage
-coverage
-*.lcov
-
-# logs
-logs
-*.log
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-
-# dotenv environment variable files
+# dotenv
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# caches
-.eslintcache
-.cache
-*.tsbuildinfo
+.env.*
 
 # IntelliJ based IDEs
 .idea
