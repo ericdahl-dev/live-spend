@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js"
 
 /**
- * Normalised usage data returned by every provider fetcher.
+ * Normalized usage data returned by every provider fetcher.
  * Fields are optional because each provider exposes different metrics.
  * OpenAI/OpenRouter return spend in USD; Anthropic returns raw token counts.
  */

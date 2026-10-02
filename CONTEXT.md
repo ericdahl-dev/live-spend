@@ -9,7 +9,7 @@
 | Term | Definition |
 |------|-----------|
 | **Provider** | An AI API vendor (OpenAI, Anthropic, OpenRouter). Each has its own API shape and key type. |
-| **ProviderResult** | The normalised data structure returned by a provider fetcher: `{ spend?, inputTokens?, outputTokens?, creditsUsed?, creditsRemaining?, error? }` |
+| **ProviderResult** | The normalized data structure returned by a provider fetcher: `{ spend?, inputTokens?, outputTokens?, creditsUsed?, creditsRemaining?, error? }` |
 | **ProviderState** | Reactive state for one provider: `{ result, status, lastUpdated? }`. Status is one of `idle`, `loading`, `ok`, `error`, `unconfigured`. |
 | **Fetcher** | A pure async function that calls a provider's API and returns a `ProviderResult`. Lives in `src/providers/`. |
 | **Poll cycle** | One round of calling all configured fetchers and updating the store. Triggered on mount and every 30s. |
